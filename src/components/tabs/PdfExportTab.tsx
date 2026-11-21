@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
-import { FileText, Download, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, CheckCircle2, Presentation } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Team, Submission } from '../../types';
 import { CASE_STAGES } from '../../data/mockData';
 import { generateTeamProgressPdf } from '../../services/pdfExport';
+import { downloadPortalPresentationPptx } from '../../services/presentationPptxExport';
+import { downloadPortalPresentationPdf } from '../../services/presentationPdfExport';
 
 interface PdfExportTabProps {
   teams: Team[];
   activeTeam: Team;
   submissions: Submission[];
+  onOpenPresentation?: () => void;
 }
 
-export const PdfExportTab: React.FC<PdfExportTabProps> = ({ teams, activeTeam, submissions }) => {
+export const PdfExportTab: React.FC<PdfExportTabProps> = ({
+  teams,
+  activeTeam,
+  submissions,
+  onOpenPresentation,
+}) => {
   const [selectedTeamId, setSelectedTeamId] = useState<string>(activeTeam.id);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPptx, setIsExportingPptx] = useState(false);
+  const [isExportingPresPdf, setIsExportingPresPdf] = useState(false);
   const [exportDone, setExportDone] = useState(false);
+  const [pptxDone, setPptxDone] = useState<string | null>(null);
 
   const team = teams.find((t) => t.id === selectedTeamId) || activeTeam;
   const teamSubmissions = submissions.filter((s) => s.teamId === team.id);
@@ -35,6 +46,46 @@ export const PdfExportTab: React.FC<PdfExportTabProps> = ({ teams, activeTeam, s
 
       setTimeout(() => setExportDone(false), 4000);
     }, 400);
+  };
+
+  const handleDownloadPptx = async () => {
+    setIsExportingPptx(true);
+    try {
+      const name = await downloadPortalPresentationPptx({
+        teamName: team.name,
+        totalTeams: teams.length,
+        generatedDate: new Date().toLocaleDateString('ru-RU'),
+      });
+      setPptxDone(name);
+      confetti({
+        particleCount: 55,
+        spread: 65,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setPptxDone(null), 4500);
+    } finally {
+      setIsExportingPptx(false);
+    }
+  };
+
+  const handleDownloadPresPdf = async () => {
+    setIsExportingPresPdf(true);
+    try {
+      const name = await downloadPortalPresentationPdf({
+        teamName: team.name,
+        totalTeams: teams.length,
+        generatedDate: new Date().toLocaleDateString('ru-RU'),
+      });
+      setPptxDone(name);
+      confetti({
+        particleCount: 55,
+        spread: 65,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setPptxDone(null), 4500);
+    } finally {
+      setIsExportingPresPdf(false);
+    }
   };
 
   return (
@@ -60,17 +111,58 @@ export const PdfExportTab: React.FC<PdfExportTabProps> = ({ teams, activeTeam, s
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleDownloadPdf}
             disabled={isExporting}
-            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 shadow-lg shadow-cyan-500/25 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 shadow-lg shadow-cyan-500/25 transition-all disabled:opacity-50 cursor-pointer"
           >
             <Download className="h-4 w-4" />
             <span>{isExporting ? 'Формирование PDF...' : 'Скачать отчет в PDF'}</span>
           </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadPptx}
+            disabled={isExportingPptx || isExportingPresPdf}
+            className="flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <Presentation className="h-4 w-4" />
+            <span>{isExportingPptx ? 'Сборка PPTX...' : 'Презентация (.PPTX)'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadPresPdf}
+            disabled={isExportingPptx || isExportingPresPdf}
+            className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <FileText className="h-4 w-4" />
+            <span>{isExportingPresPdf ? 'Сборка PDF...' : 'Презентация (.PDF)'}</span>
+          </button>
+
+          {onOpenPresentation && (
+            <button
+              type="button"
+              onClick={onOpenPresentation}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-950 hover:border-cyan-500/40 px-3 py-2 text-xs font-semibold text-slate-200 hover:text-white transition-all cursor-pointer"
+            >
+              <Presentation className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Открыть слайды</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {pptxDone && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-3 text-amber-200 text-xs flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
+          <span>
+            Презентация портала «{pptxDone}» (10 слайдов, 16:9) успешно сохранена на ваше
+            устройство!
+          </span>
+        </div>
+      )}
 
       {/* Select Team Dropdown */}
       <div className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">

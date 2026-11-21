@@ -45,6 +45,7 @@ import {
   Users,
   Sparkles,
   Bell,
+  Presentation,
 } from 'lucide-react';
 import type { EventStageId, EventStageState } from './shared/types/stageDirector';
 import { CRM_TEAMS_DATABASE } from './contexts/crew/data/crmTeamsData';
@@ -128,6 +129,11 @@ const CertificatesTab = lazy(() =>
 const PdfExportTab = lazy(() =>
   import('./components/tabs/PdfExportTab').then((m) => ({ default: m.PdfExportTab })),
 );
+const PortalPresentationTab = lazy(() =>
+  import('./components/tabs/PortalPresentationTab').then((m) => ({
+    default: m.PortalPresentationTab,
+  })),
+);
 const TeamRegistrationForm = lazy(() =>
   import('./components/TeamRegistrationForm').then((m) => ({ default: m.TeamRegistrationForm })),
 );
@@ -174,6 +180,7 @@ export type MenuItemId =
   | 'analytics'
   | 'certificates'
   | 'reports'
+  | 'presentation'
   | 'crm'
   | 'stage_director';
 
@@ -442,6 +449,14 @@ const MENU_ITEMS: SidebarMenuItem[] = [
     icon: FileText,
     category: 'tools',
     description: 'Экспорт паспорта миссии',
+  },
+  {
+    id: 'presentation',
+    label: 'Презентация (.PPTX)',
+    icon: Presentation,
+    category: 'tools',
+    badge: 'PPTX',
+    description: '10 слайдов: функционал, задачи и руководства ролей',
   },
   {
     id: 'cosmoport',
@@ -1742,6 +1757,15 @@ export default function App() {
                 teams={cosmoportTeams}
                 activeTeam={activeTeam}
                 submissions={submissions}
+                onOpenPresentation={() => setActiveTab('presentation')}
+              />
+            )}
+
+            {/* ПРЕЗЕНТАЦИЯ ПОРТАЛА (.PPTX) */}
+            {activeTab === 'presentation' && (
+              <PortalPresentationTab
+                activeTeam={activeTeam}
+                totalTeams={cosmoportTeams.length}
               />
             )}
 
@@ -1827,6 +1851,8 @@ export default function App() {
               crm: 'crm',
               pdf: 'reports',
               reports: 'reports',
+              pptx: 'presentation',
+              presentation: 'presentation',
             };
             const target = tabMap[tab] || (tab as MenuItemId);
             setActiveTab(target);

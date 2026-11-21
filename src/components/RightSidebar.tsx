@@ -49,11 +49,15 @@ import {
   FlaskConical,
   Cpu,
   Tv,
+  Presentation,
+  Download,
 } from 'lucide-react';
 import type { UserRole, Team, TelemetryPacket } from '../types';
 import type { EventStageState } from '../shared/types/stageDirector';
 import { GeminiLiveVoiceModal } from '../contexts/ai/components/GeminiLiveVoiceModal';
 import { audioService } from '../shared/lib/audioService';
+import { downloadPortalPresentationPptx } from '../services/presentationPptxExport';
+import { downloadPortalPresentationPdf } from '../services/presentationPdfExport';
 
 export type AiRoleAgent = 'professor' | 'engineer' | 'biochem' | 'registrar';
 
@@ -594,6 +598,16 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         badge: 'Экспорт',
         description: 'Экспорт проектной документации и паспорта космической миссии',
         roles: ['participant', 'mentor', 'jury', 'expert', 'organizer', 'admin'],
+      },
+      {
+        id: 'presentation',
+        label: 'Презентация портала (.PPTX)',
+        icon: Presentation,
+        category: 'tools',
+        badge: 'PPTX',
+        description: '10 слайдов: функционал, задачи и руководства для всех ролей',
+        roles: ['participant', 'mentor', 'jury', 'expert', 'organizer', 'admin'],
+        roleHighlight: 'Скачать PowerPoint',
       },
       {
         id: 'cosmoport',
@@ -1635,6 +1649,66 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                   </div>
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => handleSelectNav('presentation')}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-500/15 to-cyan-500/15 border border-cyan-500/40 text-slate-100 hover:border-cyan-400 transition-all text-left cursor-pointer"
+              >
+                <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300">
+                  <Presentation className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-xs">Открыть презентацию портала</div>
+                  <div className="text-[10px] text-slate-300">
+                    10 слайдов: задачи и гайды ролей
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void downloadPortalPresentationPptx({
+                    teamName: activeTeam.name,
+                    totalTeams: allTeams.length,
+                    generatedDate: new Date().toLocaleDateString('ru-RU'),
+                  });
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 text-slate-200 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <div className="p-2 rounded-lg bg-slate-800 text-amber-400">
+                  <Download className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-xs">Скачать презентацию (.PPTX)</div>
+                  <div className="text-[10px] text-slate-400">
+                    Готовый файл PowerPoint 16:9
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void downloadPortalPresentationPdf({
+                    teamName: activeTeam.name,
+                    totalTeams: allTeams.length,
+                    generatedDate: new Date().toLocaleDateString('ru-RU'),
+                  });
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-200 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <div className="p-2 rounded-lg bg-slate-800 text-emerald-400">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-xs">Скачать презентацию (.PDF)</div>
+                  <div className="text-[10px] text-slate-400">
+                    Альбомные слайды 16:9 (10 листов)
+                  </div>
+                </div>
+              </button>
 
               {/* Documentation Links */}
               <div className="pt-2 border-t border-slate-800 space-y-2">

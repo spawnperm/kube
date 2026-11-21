@@ -39,7 +39,10 @@ import {
   syncApplicationFromChampionship,
 } from '../../data/spacePiData';
 
-import { generateSpacePiPassportPdf } from '../../services/spacePiPdfExport';
+import {
+  generateSpacePiPassportPdf,
+  downloadSpacePiSampleApplicationPdf,
+} from '../../services/spacePiPdfExport';
 
 interface SpacePiTabProps {
   team: Team;
@@ -113,6 +116,7 @@ export const SpacePiTab: React.FC<SpacePiTabProps> = ({
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
   const [juryNoteText, setJuryNoteText] = useState<string>('');
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+  const [isExportingSamplePdf, setIsExportingSamplePdf] = useState<boolean>(false);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
 
   // Dynamic compliance calculation
@@ -208,6 +212,19 @@ export const SpacePiTab: React.FC<SpacePiTabProps> = ({
       console.error('PDF export error:', e);
     } finally {
       setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportSamplePdf = async () => {
+    setIsExportingSamplePdf(true);
+    try {
+      const fileName = await downloadSpacePiSampleApplicationPdf();
+      setSaveBanner(`Пример заявки в Space-π «${fileName}» успешно сформирован и скачан!`);
+      setTimeout(() => setSaveBanner(null), 4000);
+    } catch (e) {
+      console.error('Sample PDF export error:', e);
+    } finally {
+      setIsExportingSamplePdf(false);
     }
   };
 
@@ -353,6 +370,21 @@ export const SpacePiTab: React.FC<SpacePiTabProps> = ({
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleExportSamplePdf}
+              disabled={isExportingSamplePdf}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 px-3.5 py-2 text-xs font-bold text-amber-200 transition-colors disabled:opacity-50 cursor-pointer"
+              title="Скачать готовый образец заполнения проектной заявки Space-π в формате PDF"
+            >
+              <Download className="h-3.5 w-3.5 text-amber-300" />
+              <span>
+                {isExportingSamplePdf
+                  ? 'Формирование примера...'
+                  : 'Скачать пример заявки Space-π (PDF)'}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -462,24 +494,34 @@ export const SpacePiTab: React.FC<SpacePiTabProps> = ({
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleSaveDraft}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   Сохранить черновик
                 </button>
                 <button
+                  type="button"
+                  onClick={handleExportSamplePdf}
+                  disabled={isExportingSamplePdf}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-900/50 transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Скачать образец заполненной заявки Space-π (PDF)"
+                >
+                  <FileText className="h-3.5 w-3.5 text-amber-300" />
+                  {isExportingSamplePdf ? 'Сборка...' : 'Пример заявки (PDF)'}
+                </button>
+                <button
                   onClick={handleExportPdf}
                   disabled={isExportingPdf}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/60 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/60 transition-colors cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5" />
                   {isExportingPdf ? 'Генерация...' : 'Паспорт (PDF)'}
                 </button>
                 <button
                   onClick={handleExportJson}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors cursor-pointer"
                   title="Экспорт спецификации JSON для АС Фонд-М"
                 >
                   JSON
@@ -1523,16 +1565,27 @@ export const SpacePiTab: React.FC<SpacePiTabProps> = ({
       {/* ============================================================== */}
       {subTab === 'guidelines' && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Info className="h-4 w-4 text-sky-400" />
-              Официальный регламент грантового конкурса Space-π и АС «Фонд-М»
-            </h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Проект Space-π реализуется в рамках программы «Дежурный по планете» при поддержке
-              Фонда содействия инновациям и Госкорпорации «Роскосмос». Цель — вовлечение школьников
-              в проектирование реальных малых космических аппаратов.
-            </p>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Info className="h-4 w-4 text-sky-400" />
+                Официальный регламент грантового конкурса Space-π и АС «Фонд-М»
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Проект Space-π реализуется в рамках программы «Дежурный по планете» при поддержке
+                Фонда содействия инновациям и Госкорпорации «Роскосмос». Цель — вовлечение школьников
+                в проектирование реальных малых космических аппаратов.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleExportSamplePdf}
+              disabled={isExportingSamplePdf}
+              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-slate-950 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              <Download className="h-4 w-4" />
+              <span>{isExportingSamplePdf ? 'Формирование...' : 'Образец заявки (PDF)'}</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
