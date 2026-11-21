@@ -1,0 +1,9 @@
+dist
+coverage
+node_modules
+bun.lock
+package-lock.json
+test-results
+playwright-report
+blob-report
+src/shared/data/caseTasksDatabase.ts

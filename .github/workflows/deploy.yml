@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build & deploy on VPS
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build -t kosmos-prosto:latest -t "kosmos-prosto:${GITHUB_SHA::7}" .
+
+      - name: Sync compose + traefik config
+        run: |
+          install -m 644 docker-compose.prod.yml /opt/kosmos-prosto/docker-compose.yml
+          install -m 644 dynamic.yml /opt/kosmos-prosto/dynamic.yml
+
+      - name: Deploy via Traefik + docker compose
+        run: |
+          cd /opt/kosmos-prosto
+          docker compose up -d --remove-orphans
+          docker image prune -f
+          echo "--- status ---"
+          docker compose ps
+          echo "--- health ---"
+          sleep 3
+          curl -fsS http://127.0.0.1/api/health >/dev/null && echo "health OK" || echo "health FAILED"

@@ -1,0 +1,13 @@
+http:
+  routers:
+    cosmoport:
+      rule: 'PathPrefix(`/`)'
+      entryPoints:
+        - web
+      service: cosmoport
+
+  services:
+    cosmoport:
+      loadBalancer:
+        servers:
+          - url: 'http://cosmoport:3000'

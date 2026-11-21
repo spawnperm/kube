@@ -1,0 +1,6 @@
+{
+  "name": "КОСМОПОРТ — Кейс-чемпионат по физике и CubeSat",
+  "description": "Единая космическая платформа кейс-чемпионата по физике «Космос-просто» и проектирования наноспутников CubeSat: 3D-модель, AI-маскот Кубик, телеметрия, ЦУП, банк 500 кейсов, Space-Pi и судейство.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

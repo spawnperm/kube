@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: КОСМОПОРТ API
+  version: 1.0.0
+  description: Канонический контракт REST и WebSocket API портала школьного чемпионата по прикладной физике «Космос-просто».
+servers:
+  - url: http://localhost:3000
+    description: Локальный сервер разработки
+  - url: https://cosmoport.pstu.tech
+    description: Продуктовый контур
+
+paths:
+  /api/health:
+    get:
+      summary: Проверка работоспособности системы (Health Check)
+      description: Возвращает текущее состояние рантайма, аптайм и флаги доступности подсистем.
+      responses:
+        '200':
+          description: Сервис функционирует штатно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /api/teams:
+    get:
+      summary: Список зарегистрированных команд чемпионата
+      responses:
+        '200':
+          description: Массив команд с текущим рейтингом
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+    post:
+      summary: Регистрация новой команды
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamRegistrationPayload'
+      responses:
+        '201':
+          description: Команда успешно зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          description: Ошибка валидации состава экипажа
+
+  /api/submissions:
+    get:
+      summary: Список поданных решений этапов
+      parameters:
+        - name: teamId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: stageId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список решений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+
+  /api/telemetry/latest:
+    get:
+      summary: Текущий срез телеметрии CubeSat
+      responses:
+        '200':
+          description: Актуальные орбитальные и системные показатели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CubeSatTelemetry'
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required:
+        - status
+        - timestamp
+        - uptimeSec
+      properties:
+        status:
+          type: string
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+        uptimeSec:
+          type: integer
+          example: 3600
+        activeConnections:
+          type: integer
+          example: 42
+        version:
+          type: string
+          example: 1.0.0
+
+    Team:
+      type: object
+      required:
+        - id
+        - name
+        - city
+        - school
+        - totalScore
+        - rank
+      properties:
+        id:
+          type: string
+          example: team-alpha
+        name:
+          type: string
+          example: Орбита-7
+        city:
+          type: string
+          example: Пермь
+        school:
+          type: string
+          example: Лицей №1
+        totalScore:
+          type: number
+          example: 385.5
+        rank:
+          type: integer
+          example: 1
+        captainName:
+          type: string
+          example: Алексей Гагарин
+
+    TeamRegistrationPayload:
+      type: object
+      required:
+        - name
+        - city
+        - school
+        - captainName
+        - members
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        school:
+          type: string
+        captainName:
+          type: string
+        mentorName:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+
+    Submission:
+      type: object
+      required:
+        - id
+        - teamId
+        - stageId
+        - title
+        - status
+      properties:
+        id:
+          type: string
+        teamId:
+          type: string
+        stageId:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, under_review, evaluated]
+        totalScore:
+          type: number
+
+    CubeSatTelemetry:
+      type: object
+      required:
+        - timestamp
+        - altitudeKm
+        - velocityKmS
+        - batteryPct
+        - solarVoltageV
+        - tempInternalC
+        - radiationUsvH
+      properties:
+        timestamp:
+          type: integer
+        altitudeKm:
+          type: number
+          example: 485.2
+        velocityKmS:
+          type: number
+          example: 7.68
+        batteryPct:
+          type: number
+          example: 94.5
+        solarVoltageV:
+          type: number
+          example: 4.82
+        tempInternalC:
+          type: number
+          example: 18.4
+        radiationUsvH:
+          type: number
+          example: 0.32
